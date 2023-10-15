@@ -2,7 +2,7 @@ mod types;
 
 
 
-contract Blank {
+contract Vault {
     use dep::std::option::Option;
     use dep::safe_math::SafeU120;
 
@@ -105,5 +105,49 @@ contract Blank {
         storage.admin.write(new_admin);
         let initial = SafeU120::new(initial_liquidity);
         storage.liquidity.write(initial);
+    }
+
+    // #[aztec(private)]
+    // fn open_position(
+
+    // )
+
+    // #[aztec(private)]
+    // fn close_position(
+
+    // )
+
+    // #[aztec(public)]
+    // internal fn _increase_market_oi(
+    //     market_id: Field,
+    //     amount: Field,
+    //     pos_type: Field
+    // ) {
+        
+    // }
+
+    unconstrained fn admin() -> Field {
+        storage.admin.read().address
+    }
+
+    unconstrained fn market(market_id: Field) -> Market {
+        storage.markets.at(market_id).read()
+    }
+
+    unconstrained fn position(
+        user: Field,
+        pos_id: Field
+    ) -> Position {
+        storage.positions.at(user).at(pos_id).get_note()
+    }
+
+    unconstrained fn liquidity() -> u120 {
+        storage.liquidity.read().value
+    }
+
+    unconstrained fn last_pos_id(
+        user: Field
+    ) -> u32 {
+        storage.usersLastPosId.at(user).get_note().value
     }
 }
