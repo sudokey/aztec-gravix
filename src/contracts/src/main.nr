@@ -20,7 +20,7 @@ contract Blank {
         oracle::{
             get_public_key::get_public_key,
         },
-        state_vars::{map::Map, public_state::PublicState, set::Set},
+        state_vars::{map::Map, public_state::PublicState, set::Set, singleton::Singleton},
         types::type_serialization::{
             field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
@@ -37,7 +37,7 @@ contract Blank {
         admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
         markets: Map<PublicState<Market, MARKET_SERIALIZED_LEN>>,
         liquidity: PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>,
-        positions: Map<Map<Position>>
+        positions: Map<Map<Singleton<Position, POSITION_SERIALIZED_LEN>>>
     }
 
     impl Storage {
@@ -64,6 +64,7 @@ contract Blank {
                     3,
                     SafeU120SerializationMethods,
                 ),
+                // -------------------- PRIVATE ----------------------
                 positions: Map::new(
                     context,
                     4,
@@ -71,8 +72,8 @@ contract Blank {
                         Map::new(
                             context,
                             slot,
-                            |context, slot|{
-                                Position::new()
+                            |context, slot| {
+                                Singleton::new(context, slot, PositionSerializationMethods)
                             }
                         )
                     },
@@ -83,5 +84,16 @@ contract Blank {
 
 
     #[aztec(private)]
-    fn constructor() {}
+    fn constructor(admin: AztecAddress) {
+        let selector = compute_selector("_initialize((Field))");
+        context.call_public_function(context.this_address(), selector, [admin.address]);
+    }
+
+    // ---------------------------------------- PUBLIC -----------------------------------------------
+    #[aztec(public)]
+    internal fn _initialize(
+        new_admin: AztecAddress,
+    ) {
+        storage.admin.write(new_admin);
+    }
 }

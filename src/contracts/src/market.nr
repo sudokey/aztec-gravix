@@ -13,7 +13,7 @@ struct Market {
 
 global MARKET_SERIALIZED_LEN: Field = 8;
 
-fn deserializeMarket(fields: [Field; MARKET_SERIALIZED_LEN]) -> Market {
+fn deserialize(fields: [Field; MARKET_SERIALIZED_LEN]) -> Market {
     Market {
         totalLongs: fields[0] as u120,
         totalShorts: fields[1] as u120,
@@ -26,7 +26,7 @@ fn deserializeMarket(fields: [Field; MARKET_SERIALIZED_LEN]) -> Market {
     }
 }
 
-fn serializeMarket(market: Market) -> [Field; MARKET_SERIALIZED_LEN] {
+fn serialize(market: Market) -> [Field; MARKET_SERIALIZED_LEN] {
     [
         market.totalLongs as Field,
         market.totalShorts as Field,
@@ -41,11 +41,11 @@ fn serializeMarket(market: Market) -> [Field; MARKET_SERIALIZED_LEN] {
 
 impl Market {
     fn serialize(self: Self) -> [Field; MARKET_SERIALIZED_LEN] {
-        serializeMarket(self)
+        serialize(self)
     }
 }
 
 global MarketSerializationMethods = TypeSerializationInterface {
-    deserialize: deserializeMarket,
-    serialize: serializeMarket
+    deserialize,
+    serialize
 };
