@@ -1,4 +1,8 @@
 use dep::aztec::types::type_serialization::TypeSerializationInterface;
+use dep::aztec::context::{PrivateContext, PublicContext, Context};
+use dep::aztec::types::address::AztecAddress;
+use dep::std::option::Option;
+
 
 struct Position {
     marketIdx: u8,
@@ -46,6 +50,21 @@ fn serializePosition(market: Position) -> [Field; POSITION_SERIALIZED_LEN] {
 }
 
 impl Position {
+    pub fn new() -> Position {
+        Position {
+            marketIdx: 0,
+            posType: 0,
+            initialCollateral: 0,
+            openFee: 0,
+            openPrice: 0,
+            markPrice: 0,
+            leverage: 0,
+            borrowBaseRatePerHour: 0,
+            liquidationThresholdRate: 0,
+            createdAt: 0
+        }
+    }
+
     fn serialize(self: Self) -> [Field; POSITION_SERIALIZED_LEN] {
         serializePosition(self)
     }

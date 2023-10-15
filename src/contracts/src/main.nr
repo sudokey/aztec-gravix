@@ -2,6 +2,8 @@ mod market;
 mod position;
 mod safe_u120_serialization;
 
+
+
 contract Blank {
     use dep::std::option::Option;
     use dep::safe_math::SafeU120;
@@ -14,6 +16,7 @@ contract Blank {
     
     use dep::aztec::{
         abi,
+        context::{PrivateContext, PublicContext, Context},
         oracle::{
             get_public_key::get_public_key,
         },
@@ -35,6 +38,47 @@ contract Blank {
         markets: Map<PublicState<Market, MARKET_SERIALIZED_LEN>>,
         liquidity: PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>,
         positions: Map<Map<Position>>
+    }
+
+    impl Storage {
+        fn init(context: Context) -> pub Self {
+            Storage {
+                admin: PublicState::new(
+                    context,
+                    1,
+                    AztecAddressSerializationMethods,
+                ),
+                markets: Map::new(
+                    context,
+                    2,
+                    |context, slot| {
+                        PublicState::new(
+                            context,
+                            slot,
+                            MarketSerializationMethods,
+                        )
+                    },
+                ),
+                liquidity: PublicState::new(
+                    context,
+                    3,
+                    SafeU120SerializationMethods,
+                ),
+                positions: Map::new(
+                    context,
+                    4,
+                    |context, slot| {
+                        Map::new(
+                            context,
+                            slot,
+                            |context, slot|{
+                                Position::new()
+                            }
+                        )
+                    },
+                )
+            }
+        }
     }
 
 
