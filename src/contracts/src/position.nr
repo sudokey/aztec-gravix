@@ -2,9 +2,12 @@ use dep::aztec::context::{PrivateContext, PublicContext, Context};
 use dep::aztec::types::address::AztecAddress;
 use dep::std::option::Option;
 use dep::aztec::note::{
+    utils::compute_note_hash_for_read_or_nullify,
     note_header::NoteHeader,
     note_interface::NoteInterface,
 };
+use dep::aztec::oracle::get_secret_key::get_secret_key;
+
 
 struct Position {
     id: u32,
@@ -18,14 +21,15 @@ struct Position {
     borrowBaseRatePerHour: u64, // we store rate on moment of position creation because rate could be changed in market config
     liquidationThresholdRate: u64,
     createdAt: u32,
+    owner: Field,
     header: NoteHeader
 }
 
-global POSITION_SERIALIZED_LEN: Field = 11;
+global POSITION_SERIALIZED_LEN: Field = 12;
 
 
 impl Position {
-    pub fn new() -> Self {
+    pub fn new(owner: Field) -> Self {
         Self {
             id: 0,
             marketIdx: 0,
@@ -38,6 +42,7 @@ impl Position {
             borrowBaseRatePerHour: 0,
             liquidationThresholdRate: 0,
             createdAt: 0,
+            owner: owner,
             header: NoteHeader::empty()
         }
     }
@@ -54,8 +59,9 @@ impl Position {
             self.leverage as Field,
             self.borrowBaseRatePerHour as Field,
             self.liquidationThresholdRate as Field,
-            self.createdAt as Field
-    ]
+            self.createdAt as Field,
+            self.owner
+        ]
     }
 
     pub fn deserialize(preimage: [Field; POSITION_SERIALIZED_LEN]) -> Self {
@@ -71,29 +77,23 @@ impl Position {
             borrowBaseRatePerHour: preimage[8] as u64,
             liquidationThresholdRate: preimage[9] as u64,
             createdAt: preimage[10] as u32,
+            owner: preimage[11],
             header: NoteHeader::empty()
         }
     }
 
     pub fn compute_note_hash(self) -> Field {
-        dep::std::hash::pedersen([
-            self.id as Field,
-            self.marketIdx as Field,
-            self.posType as Field,
-            self.initialCollateral as Field,
-            self.openFee as Field,
-            self.openPrice as Field,
-            self.markPrice as Field,
-            self.leverage as Field,
-            self.borrowBaseRatePerHour as Field,
-            self.liquidationThresholdRate as Field,
-            self.createdAt as Field
-        ])[0]
+        dep::std::hash::pedersen(self.serialize())[0]
     }
 
-    pub fn compute_nullifier(_self: Self) -> Field {
-        assert(false); // Not allowed.
-        0
+    pub fn compute_nullifier(self) -> Field {
+        let note_hash_for_nullify = compute_note_hash_for_read_or_nullify(PositionSerializationMethods, self);
+        let secret = get_secret_key(self.owner);
+        dep::std::hash::pedersen([
+            note_hash_for_nullify,
+            secret.low,
+            secret.high,
+        ])[0]
     }
 
     pub fn set_header(&mut self, header: NoteHeader) {
