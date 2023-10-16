@@ -92,7 +92,7 @@ contract Vault {
 
     #[aztec(private)]
     fn constructor(admin: AztecAddress, liquidity: Field) {
-        let selector = compute_selector("_initialize((Field))");
+        let selector = compute_selector("_initialize((Field,Field))");
         context.call_public_function(context.this_address(), selector, [admin.address, liquidity]);
     }
 
